@@ -1,6 +1,5 @@
 import { Router } from 'express';
-import { PrismaClient } from '@prisma/client';
-import { ICreateEmpresaDTO, ICreatePessoaDTO } from 'dtos';
+import { empresa, pessoa, PrismaClient } from '@prisma/client';
 
 const routes = Router();
 const prisma = new PrismaClient();
@@ -8,18 +7,18 @@ const prisma = new PrismaClient();
 /* Rotas Pessoa */
 routes.post('/pessoa', async (req, res) => {
   try {
-    const pessoa: ICreatePessoaDTO = req.body;
+    const Pessoa: pessoa = req.body;
 
     let createdPessoa;
-    if (!pessoa.datapagamentoinscricao) {
+    if (!Pessoa.datapagamentoinscricao) {
       createdPessoa = await prisma.pessoa.create({
-        data: pessoa,
+        data: Pessoa,
       });
     } else {
       createdPessoa = await prisma.pessoa.create({
         data: {
-          ...pessoa,
-          datapagamentoinscricao: new Date(pessoa.datapagamentoinscricao),
+          ...Pessoa,
+          datapagamentoinscricao: new Date(Pessoa.datapagamentoinscricao),
         },
       });
     }
@@ -35,11 +34,11 @@ routes.post('/pessoa', async (req, res) => {
 routes.post('/pessoa/:id', async (req, res) => {
   try {
     const { id } = req.params;
-    const pessoa: ICreatePessoaDTO = req.body;
+    const Pessoa: pessoa = req.body;
 
     const editedPessoa = await prisma.pessoa.update({
       where: { idpessoa: Number(id) },
-      data: pessoa,
+      data: Pessoa,
     });
 
     return res.status(200).json(editedPessoa);
@@ -66,11 +65,11 @@ routes.get('/pessoa/:id', async (req, res) => {
   try {
     const { id } = req.params;
 
-    const pessoa = await prisma.pessoa.findMany({
+    const Pessoa = await prisma.pessoa.findMany({
       where: { idpessoa: Number(id) },
     });
 
-    return res.status(200).json(pessoa);
+    return res.status(200).json(Pessoa);
   } catch (error) {
     return res
       .status(500)
@@ -92,13 +91,37 @@ routes.delete('/pessoa/:id', async (req, res) => {
   }
 });
 
+routes.post('/pessoa/subscribe-to-all-tasks/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const allTasks = await prisma.tarefa.findMany();
+
+    const PromiseSubscritionsArray: any[] = []; // criando array vazio que vai comportar as promises
+    allTasks.forEach(task => {
+      const createSub = prisma.inscricao.create({
+        data: { idpessoa: Number(id), idtarefa: task.idtarefa },
+      });
+      PromiseSubscritionsArray.push(createSub);
+    });
+
+    await prisma.$transaction(PromiseSubscritionsArray);
+
+    return res.status(204).json();
+  } catch (error) {
+    return res
+      .status(500)
+      .json({ errorName: error.name, message: error.message });
+  }
+});
+
 /* Rotas Empresa */
 routes.post('/empresa', async (req, res) => {
   try {
-    const empresa: ICreateEmpresaDTO = req.body;
+    const Empresa: empresa = req.body;
 
     const createdEmpresa = await prisma.empresa.create({
-      data: empresa,
+      data: Empresa,
     });
 
     return res.status(201).json(createdEmpresa);
@@ -112,11 +135,11 @@ routes.post('/empresa', async (req, res) => {
 routes.post('/empresa/:id', async (req, res) => {
   try {
     const { id } = req.params;
-    const empresa: ICreateEmpresaDTO = req.body;
+    const Empresa: empresa = req.body;
 
     const editedEmpresa = await prisma.empresa.update({
       where: { idempresa: Number(id) },
-      data: empresa,
+      data: Empresa,
     });
 
     return res.status(200).json(editedEmpresa);
@@ -143,11 +166,11 @@ routes.get('/empresa/:id', async (req, res) => {
   try {
     const { id } = req.params;
 
-    const empresa = await prisma.empresa.findMany({
+    const Empresa = await prisma.empresa.findMany({
       where: { idempresa: Number(id) },
     });
 
-    return res.status(200).json(empresa);
+    return res.status(200).json(Empresa);
   } catch (error) {
     return res
       .status(500)
