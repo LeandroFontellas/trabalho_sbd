@@ -97,6 +97,7 @@ routes.post('/pessoa/subscribe-to-all-tasks/:id', async (req, res) => {
 
     const allTasks = await prisma.tarefa.findMany();
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const PromiseSubscritionsArray: any[] = []; // criando array vazio que vai comportar as promises
     allTasks.forEach(task => {
       const createSub = prisma.inscricao.create({
