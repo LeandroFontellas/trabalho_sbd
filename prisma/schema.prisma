@@ -1,0 +1,95 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model empresa {
+  idempresa     Int            @id @default(autoincrement())
+  cnpj          String?        @unique @db.Char(14)
+  nomeempresa   String?        @db.VarChar(50)
+  organizadora  organizadora?
+  patrocinadora patrocinadora?
+  pessoa        pessoa[]
+  prestadora    prestadora?
+  promotora     promotora?
+}
+
+model inscricao {
+  idpessoa Int
+  idtarefa Int
+  pessoa   pessoa @relation(fields: [idpessoa], references: [idpessoa])
+  tarefa   tarefa @relation(fields: [idtarefa], references: [idtarefa])
+
+  @@id([idpessoa, idtarefa])
+}
+
+model organizadora {
+  idempresa Int     @id
+  empresa   empresa @relation(fields: [idempresa], references: [idempresa])
+}
+
+model patrocinadora {
+  idempresa       Int       @id
+  valorpatrocinio Decimal?  @db.Decimal(11, 2)
+  estadoliberacao String?   @db.Char(1)
+  dataliberacao   DateTime? @db.Date
+  empresa         empresa   @relation(fields: [idempresa], references: [idempresa])
+}
+
+model pessoa {
+  idpessoa               Int          @id @default(autoincrement())
+  cpf                    String?      @unique @db.Char(11)
+  nomepessoa             String?      @db.VarChar(50)
+  datapagamentoinscricao DateTime?    @db.Date
+  tipopessoa             String?      @db.Char(2)
+  idempresa              Int?
+  idresponsavel          Int?         @unique
+  empresa                empresa?     @relation(fields: [idempresa], references: [idempresa])
+  responsavel            responsavel? @relation(fields: [idresponsavel], references: [idresponsavel])
+  inscricao              inscricao[]
+  tarefa                 tarefa[]
+}
+
+model prestadora {
+  idempresa     Int          @id
+  idresponsavel Int?
+  empresa       empresa      @relation(fields: [idempresa], references: [idempresa])
+  responsavel   responsavel? @relation(fields: [idresponsavel], references: [idresponsavel])
+}
+
+model promotora {
+  idempresa Int     @id
+  empresa   empresa @relation(fields: [idempresa], references: [idempresa])
+}
+
+model responsavel {
+  idresponsavel Int          @id @default(autoincrement())
+  pessoa        pessoa?
+  prestadora    prestadora[]
+  servico       servico[]
+}
+
+model servico {
+  idservico          Int         @id @default(autoincrement())
+  descricaoservico   String?
+  custoservico       Decimal?    @db.Decimal(11, 2)
+  estadoservico      String?     @db.Char(1)
+  dataterminoservico DateTime?   @db.Date
+  idresponsavel      Int
+  responsavel        responsavel @relation(fields: [idresponsavel], references: [idresponsavel])
+}
+
+model tarefa {
+  idtarefa        Int         @id @default(autoincrement())
+  descricaotarefa String?
+  idpessoa        Int
+  idsupertarefa   Int?
+  pessoa          pessoa      @relation(fields: [idpessoa], references: [idpessoa])
+  tarefa          tarefa?     @relation("tarefaTotarefa_idsupertarefa", fields: [idsupertarefa], references: [idtarefa])
+  inscricao       inscricao[]
+  other_tarefa    tarefa[]    @relation("tarefaTotarefa_idsupertarefa")
+}
