@@ -1,8 +1,13 @@
 import { Router } from 'express';
 import { empresa, pessoa, PrismaClient } from '@prisma/client';
+import valida from './valida';
 
 const routes = Router();
 const prisma = new PrismaClient();
+
+// um exemplo de integridade de dados ou alguma funcionalidade da
+// aplicaçao que inclua a necessidade de uso de iteraçao(loop)e
+// que deve ser implementada por meio de gatilho;
 
 /* Rotas Pessoa */
 routes.post('/pessoa', async (req, res) => {
@@ -10,38 +15,21 @@ routes.post('/pessoa', async (req, res) => {
     const Pessoa: pessoa = req.body;
 
     let createdPessoa;
-    if (!Pessoa.datapagamentoinscricao) {
-      createdPessoa = await prisma.pessoa.create({
-        data: Pessoa,
-      });
-    } else {
-      createdPessoa = await prisma.pessoa.create({
-        data: {
-          ...Pessoa,
-          datapagamentoinscricao: new Date(Pessoa.datapagamentoinscricao),
-        },
-      });
+    if (valida(Pessoa.cpf)) {
+      if (!Pessoa.datapagamentoinscricao) {
+        createdPessoa = await prisma.pessoa.create({
+          data: Pessoa,
+        });
+      } else {
+        createdPessoa = await prisma.pessoa.create({
+          data: {
+            ...Pessoa,
+            datapagamentoinscricao: new Date(Pessoa.datapagamentoinscricao),
+          },
+        });
+      }
     }
-
     return res.status(201).json(createdPessoa);
-  } catch (error) {
-    return res
-      .status(500)
-      .json({ errorName: error.name, message: error.message });
-  }
-});
-
-routes.post('/pessoa/:id', async (req, res) => {
-  try {
-    const { id } = req.params;
-    const Pessoa: pessoa = req.body;
-
-    const editedPessoa = await prisma.pessoa.update({
-      where: { idpessoa: Number(id) },
-      data: Pessoa,
-    });
-
-    return res.status(200).json(editedPessoa);
   } catch (error) {
     return res
       .status(500)
