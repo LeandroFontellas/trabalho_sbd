@@ -13,6 +13,9 @@ const prisma = new PrismaClient();
 routes.post('/pessoa', async (req, res) => {
   try {
     const Pessoa: pessoa = req.body;
+    if (!Pessoa.cpf) {
+      throw new Error('CPF does not exist');
+    }
 
     let createdPessoa;
     if (valida(Pessoa.cpf)) {
