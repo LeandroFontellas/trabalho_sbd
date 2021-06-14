@@ -5,10 +5,8 @@ import valida from './valida';
 const routes = Router();
 const prisma = new PrismaClient();
 
-// um exemplo de integridade de dados ou alguma funcionalidade da
-// aplicaçao que inclua a necessidade de uso de iteraçao(loop)e
-// que deve ser implementada por meio de gatilho;
-
+/* Interface para manutenção de duas ou mais tabelas */
+/* Um exemplo de integridade de dados antes da inserção */
 /* Rotas Pessoa */
 routes.post('/pessoa', async (req, res) => {
   try {
@@ -33,6 +31,24 @@ routes.post('/pessoa', async (req, res) => {
       }
     }
     return res.status(201).json(createdPessoa);
+  } catch (error) {
+    return res
+      .status(500)
+      .json({ errorName: error.name, message: error.message });
+  }
+});
+
+routes.post('/pessoa/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const Pessoa: pessoa = req.body;
+
+    const editedPessoa = await prisma.pessoa.update({
+      where: { idpessoa: Number(id) },
+      data: Pessoa,
+    });
+
+    return res.status(200).json(editedPessoa);
   } catch (error) {
     return res
       .status(500)
@@ -82,9 +98,18 @@ routes.delete('/pessoa/:id', async (req, res) => {
   }
 });
 
+/* Uma transação que altere mais de uma tabela implementada em um programa rodando no cliente */
 routes.post('/pessoa/subscribe-to-all-tasks/:id', async (req, res) => {
   try {
     const { id } = req.params;
+
+    const Pessoa = await prisma.pessoa.findUnique({
+      where: { idpessoa: Number(id) },
+    });
+
+    if (!Pessoa) {
+      throw new Error('Pessoa not found');
+    }
 
     const allTasks = await prisma.tarefa.findMany();
 

@@ -1,3 +1,6 @@
+// um exemplo de integridade de dados ou alguma funcionalidade da
+// aplicaçao que inclua a necessidade de uso de iteraçao(loop)e
+// que deve ser implementada por meio de gatilho;
 export default function valida(cpf: string): boolean {
   let soma = 0;
   let expoente = 10;
